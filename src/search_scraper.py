@@ -28,6 +28,8 @@ class YoutubeScraper:
         self.query = []
         self.titles = []
         self.hrefs = []
+        self.users = []
+        self.userlist = []
         self.clean_titles = []
         self.df = pd.DataFrame()
 
@@ -78,8 +80,14 @@ class YoutubeScraper:
 
         self.driver.get('https://accounts.google.com/ServiceLogin?service=youtube&uilel=3&passive=true&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Ddesktop%26hl%3Den%26next%3Dhttps%253A%252F%252Fwww.youtube.com%252F&hl=en&ec=65620')
 
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
-            (By.ID, 'identifierId'))).send_keys(username)
+        try:
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
+                (By.ID, 'identifierId'))).send_keys(username)
+        except:
+            WebDriverWait(self.driver,10).until(EC.element_to_be_clickable((By.CLASS_NAME,'BHzsHc'))).click()
+            time.sleep(3)            
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located(
+                (By.ID, 'identifierId'))).send_keys(username)
 
         WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable(
             (By.XPATH, '//*[@id="identifierNext"]'))).click()
@@ -92,21 +100,23 @@ class YoutubeScraper:
         time.sleep(5)
 
     def get_result(self, queries, username, password):
-        self.user_login(username=username, password=password)
-        for query in queries:
-            self.search(query)
-            num_of_results = self.get_titles()
-            self.query = self.query + ([query]*num_of_results)
+        for username in self.userlist:
+            self.user_login(username=username, password=password)
+            for query in queries:
+                self.search(query)
+                num_of_results = self.get_titles()
+                self.users = self.users + ([username]*num_of_results)
+                self.query = self.query + ([query]*num_of_results)
+            try:
+                self.log_out()
+            except:
+                pass
         self.df['User'] = username
         self.df['Query'] = self.query
         self.df['Titles'] = self.titles
         self.df['URL'] = self.hrefs
         self.df['Clean_Titles'] = self.df['Titles'].apply(
             lambda x: self.clean_(x))
-        try:
-            self.log_out()
-        except:
-            pass
         self.end_session()
         return self.df
 
@@ -121,7 +131,7 @@ class YoutubeScraper:
 if __name__ == '__main__':
     scraper = YoutubeScraper()
     ####### need to replace with your own value ########
-    username = 'USERNAME'
+    username = ['USERNAME1']
     password = 'PASSWORD'
     # a list of keywords that we want to scrape the search results for
     words = ['python tutorial', 'best camera review']
