@@ -109,7 +109,7 @@ class YoutubeScraper:
 
     def get_result(self, words):
         '''The main program to scrape search results using all the accounts.'''
-        for i in len(self.userlist):
+        for i in range(len(self.userlist)):
             self.user_login(
                 username=self.userlist[i], password=self.password[i])
             for word in words:

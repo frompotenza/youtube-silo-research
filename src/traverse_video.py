@@ -4,7 +4,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import undetected_chromedriver as uc
 from random import randrange
-import pandas as pd
 import time
 import requests
 import re
