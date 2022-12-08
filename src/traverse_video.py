@@ -3,7 +3,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import undetected_chromedriver as uc
-from random import randrange
+from random import choices, randrange
 import time
 import requests
 import re
@@ -68,7 +68,7 @@ class YoutubeIterator:
         WebDriverWait(self.driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, '//*[@id="passwordNext"]/div/button'))).click()
 
-    def watch_from_homepage(self, categoryList, percentage_interval, length_interval):
+    def watch_from_homepage(self, categoryList, username, length_interval):
         '''
         Start watching video from YouTube homepage. Will check if the video is in
         the category that we are interested in and if the duration of the video is within
@@ -95,9 +95,9 @@ class YoutubeIterator:
                 if int(data['items'][0]['snippet']['categoryId']) in categoryList:
                     duration = self.get_duration(id)
                     if duration > length_interval[0] and duration <= length_interval[1]:
-                        # watch the video if passed the checks for a random length within the range
+                        # if passed the checks for a random length within the range, watch the video
                         self.watch_video(
-                            id, self.get_random_length_percentage(percentage_interval))
+                            id, self.get_random_length_percentage(username))
                         break
 
     def watch_video(self, id, percentage):
@@ -125,9 +125,10 @@ class YoutubeIterator:
         # watch until time is up
         time.sleep(watch_time)
 
-    def click_sidebar(self, number, percentage_interval, length_interval):
+    def click_sidebar(self, number, username, length_interval):
         '''Watch videos from sidebar until number of videos specified is reached.'''
         watched = 0
+        time.sleep(2)
 
         # keep watching until enough
         while watched < number:
@@ -136,7 +137,7 @@ class YoutubeIterator:
                 By.CSS_SELECTOR, ".yt-simple-endpoint.style-scope.ytd-compact-video-renderer")
             #randomly choose one to watch from teh list
             self.watch_video(self.get_random_choice(
-                ids, length_interval), self.get_random_length_percentage(percentage_interval))
+                ids, length_interval), self.get_random_length_percentage(username))
             watched += 1
 
     def get_random_choice(self, list, length_interval):
@@ -146,13 +147,17 @@ class YoutubeIterator:
             choice = randrange(len(list))
         return list[choice]
 
-    def get_random_length_percentage(self, list):
+    def get_random_length_percentage(self, username):
         '''
-        Helper function that returns an interger from the interval given. For example, if we want
-        to stop watching a video between 50% to 80% of its total length, this function takes [50,80]
-        and will return an integer between that interval.
+        Helper function that generates an integer value representing the percentage of the total length of the video
+        that a user would watch based on the account's gneder and the weight distribution from survey response.
         '''
-        return randrange(list[0], list[1])
+        if username in ['prometheusaifemale@gmail.com','fprometheusfreq@gmail.com']:
+            time_interval = choices(population=[[0,9],[10,49],[50,80],[81,100]],weights=[0.029,0.143,0.386,0.443],k=1)
+
+        else:
+            time_interval = choices(population=[[0,9],[10,49],[50,80],[81,100]],weights=[0,0.132,0.382,0.485],k=1)
+        return randrange(time_interval[0][0], time_interval[0][1])
 
     def get_duration(self, id):
         url = 'https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id={id}&key={api_key}'
@@ -213,7 +218,7 @@ class YoutubeIterator:
         '''Terminate the driver.'''
         self.driver.quit()
 
-    def run(self, usernames, password, categoryList, percentage_interval, length_interval, num_sidebar):
+    def run(self, usernames, password, categoryList, length_interval, num_sidebar):
         '''
         Main function that orchestrate the whole process of traversing through videos.
         Iterate through the list of usernames in order and make each one of the accounts to watch videos according to
@@ -223,10 +228,10 @@ class YoutubeIterator:
             self.user_login(username=usernames[i], password=password[i])
 
             self.watch_from_homepage(
-                categoryList[i], percentage_interval[i], length_interval[i])
+                categoryList[i], usernames[i], length_interval[i])
 
             self.click_sidebar(
-                num_sidebar[i], percentage_interval[i], length_interval[i])
+                num_sidebar[i], usernames[i], length_interval[i])
             self.log_out()
 
         print("EXECUTED SUCCESSFULLY")
