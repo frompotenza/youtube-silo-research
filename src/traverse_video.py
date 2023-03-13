@@ -125,11 +125,12 @@ class YoutubeIterator:
         # watch until time is up
         time.sleep(watch_time)
 
-    def click_sidebar(self, number, username, length_interval):
+    def click_sidebar(self, username, length_interval):
         '''Watch videos from sidebar until number of videos specified is reached.'''
         watched = 0
         time.sleep(2)
 
+        number = self.get_random_num_sidebar(username)
         # keep watching until enough
         while watched < number:
             #get a list of the ids of the videos on the sidebar
@@ -157,6 +158,18 @@ class YoutubeIterator:
 
         else:
             time_interval = choices(population=[[0,9],[10,49],[50,80],[81,100]],weights=[0,0.132,0.382,0.485],k=1)
+        return randrange(time_interval[0][0], time_interval[0][1])
+    
+    def get_random_num_sidebar(self, username):
+        '''
+        Helper function that generates an integer value representing the number of videos a user would click in the sidebar
+        in a row before returning to homepage.
+        '''
+        time_interval = []
+        if username in ['prometheusaifemale@gmail.com','fprometheusfreq@gmail.com']:
+            time_interval = choices(population=[[1,1],[2,3],[4,5],[6,10],[10,15],[15,20]],weights=[0,0.386,0.314,0.142,0.043,0.114],k=1)
+        else:
+            time_interval = choices(population=[[1,1],[2,3],[4,5],[6,10],[10,15],[15,20]],weights=[0.044,0.294,0.309,0.118,0.074,0.162],k=1)
         return randrange(time_interval[0][0], time_interval[0][1])
 
     def get_duration(self, id):
@@ -218,7 +231,7 @@ class YoutubeIterator:
         '''Terminate the driver.'''
         self.driver.quit()
 
-    def run(self, usernames, password, categoryList, length_interval, num_sidebar):
+    def run(self, usernames, password, categoryList, length_interval):
         '''
         Main function that orchestrate the whole process of traversing through videos.
         Iterate through the list of usernames in order and make each one of the accounts to watch videos according to
@@ -230,8 +243,7 @@ class YoutubeIterator:
             self.watch_from_homepage(
                 categoryList[i], usernames[i], length_interval[i])
 
-            self.click_sidebar(
-                num_sidebar[i], usernames[i], length_interval[i])
+            self.click_sidebar(usernames[i], length_interval[i])
             self.log_out()
 
         print("EXECUTED SUCCESSFULLY")
@@ -244,10 +256,7 @@ if __name__ == '__main__':
     usernames = ['USERNAME1', 'USERNAME2']
     password = ['PASSWORD1', 'PASSWORD2']
     categoryList = [[24, 10, 22, 27, 23], [24, 23, 28, 20, 10]]
-    percentage_interval = [[50, 80], [50, 80]]
     length_interval = [[0, 18000], [0, 18000]]
-    num_sidebar = [2, 2]
     ###########################################################################
 
-    iterator_.run(usernames, password, categoryList,
-                  percentage_interval, length_interval, num_sidebar)
+    iterator_.run(usernames, password, categoryList, length_interval)
